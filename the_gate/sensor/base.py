@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import threading
 from typing import Optional, List
+from enum import Enum
 import time
 
 
@@ -11,19 +12,25 @@ class CarStatus:
     is_car: bool
 
 
+class GateStatus(Enum):
+    Closed = 0
+    Unclear = 1
+    Open = 2
+
+
 @dataclass
 class State:
     entrance: CarStatus
     exit: CarStatus
     gate_proximity: bool
-    gate_open: bool
+    gate_status: GateStatus
 
 
 NoState = State(
     entrance=CarStatus(proximity=False, license_plate=None, is_car=False),
     exit=CarStatus(proximity=False, license_plate=None, is_car=False),
     gate_proximity=False,
-    gate_open=False,
+    gate_status=GateStatus.Closed,
 )
 
 
@@ -32,6 +39,7 @@ class BaseSensor(threading.Thread):
         super().__init__(name=name, daemon=True)
         self._state = NoState
         self._update_event = event
+        self._update_event.set()
         self._status_lock = threading.RLock()
         self.interval = interval
 
@@ -41,8 +49,6 @@ class BaseSensor(threading.Thread):
             self._state = new_state
         if set_event:
             self._update_event.set()
-        else:
-            self._update_event.clear()
 
     def get_state(self) -> State:
         return self._state
