@@ -27,6 +27,6 @@ def test_event_notifies():
     sensor = DummySensor(event)
     start = time.time()
     sensor.start()
-    if event.wait():
+    while event.wait(timeout=5):
         end = time.time()
-    assert end - start > 1
+    assert 1 < end - start < 4
